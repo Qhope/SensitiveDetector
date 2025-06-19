@@ -1,0 +1,6 @@
+<!-- Warning 16x16 icon -->
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <rect width="16" height="16" fill="#ff4444" rx="2"/>
+  <path d="M8 2L14 12H2L8 2z" fill="white"/>
+  <text x="8" y="10" font-family="Arial, sans-serif" font-size="6" fill="#ff4444" text-anchor="middle" font-weight="bold">!</text>
+</svg>

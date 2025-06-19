@@ -1,0 +1,5 @@
+<!-- Placeholder 16x16 icon -->
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <rect width="16" height="16" fill="#007bff" rx="2"/>
+  <path d="M8 2l1.5 3h3l-2.5 2 1 3-3-2-3 2 1-3-2.5-2h3L8 2z" fill="white"/>
+</svg>

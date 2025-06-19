@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "Sensitive Information Detector",
+  "version": "1.0",
+  "description": "Detects and warns about sensitive information being entered on non-HTTPS pages",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "management",
+    "alarms"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": [
+        "content/detector.js",
+        "content/iframe-scanner.js",
+        "content/shadow-dom-scanner.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Sensitive Information Detector"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["styles/warning.css", "content/injected-script.js"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ]
+}

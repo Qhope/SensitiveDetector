@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Data URL Iframe Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        iframe { border: 1px solid #ccc; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Data URL Iframe Sensitive Information Detection Test</h1>
+    
+    <p>This page tests the iframe scanner's ability to detect sensitive information in data: URL iframes.</p>
+    
+    <h2>Test 1: Data URL iframe with pre-filled sensitive content</h2>
+    <iframe id="test1" title="Test form with pre-filled sensitive data" src="data:text/html,<html><body><h3>Test Form</h3><input type='text' value='4532-1234-5678-9012' placeholder='Credit Card'><input type='text' value='john@example.com' placeholder='Email'></body></html>" width="400" height="150"></iframe>
+    
+    <h2>Test 2: Data URL iframe with empty inputs (for user interaction)</h2>
+    <iframe id="test2" title="Test form with empty inputs for user interaction" src="data:text/html,<html><body><h3>Empty Form</h3><input type='text' placeholder='Enter credit card'><textarea placeholder='Enter SSN or sensitive data'></textarea></body></html>" width="400" height="150"></iframe>
+    
+    <h2>Test 3: Data URL iframe with dynamically added content</h2>
+    <iframe id="test3" title="Test form with dynamically added content" src="data:text/html,<html><body><h3>Dynamic Form</h3><div id='container'></div><script>setTimeout(() => { const input = document.createElement('input'); input.value = '123-45-6789'; input.placeholder = 'SSN'; document.getElementById('container').appendChild(input); }, 2000);</script></body></html>" width="400" height="150"></iframe>
+    
+    <script>
+        // Add some debug info
+        console.log('Test page loaded');
+        console.log('Protocol:', window.location.protocol);
+        
+        // Monitor iframe load events
+        document.querySelectorAll('iframe').forEach((iframe, index) => {
+            iframe.addEventListener('load', () => {
+                console.log(`Iframe ${index + 1} loaded:`, iframe.src);
+                try {
+                    const doc = iframe.contentDocument;
+                    if (doc) {
+                        console.log(`Iframe ${index + 1} document accessible:`, doc.title);
+                        const inputs = doc.querySelectorAll('input, textarea');
+                        console.log(`Iframe ${index + 1} has ${inputs.length} inputs`);
+                        inputs.forEach((input, i) => {
+                            console.log(`  Input ${i + 1}: ${input.value || '[empty]'}`);
+                        });
+                    }
+                } catch (e) {
+                    console.log(`Cannot access iframe ${index + 1} content:`, e.message);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

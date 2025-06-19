@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensitive Information Detector</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-icon">🛡️</div>
+      <h1>Sensitive Info Detector</h1>
+    </header>
+
+    <div class="security-status" id="securityStatus">
+      <div class="status-indicator" id="statusIndicator"></div>
+      <div class="status-text" id="statusText">Checking security...</div>
+    </div>
+
+    <div class="section">
+      <h2>Built-in Patterns</h2>
+      <div class="pattern-list">
+        <div class="pattern-item">
+          <span class="pattern-name">Credit Card Numbers</span>
+          <span class="pattern-severity high">High</span>
+        </div>
+        <div class="pattern-item">
+          <span class="pattern-name">Social Security Numbers</span>
+          <span class="pattern-severity high">High</span>
+        </div>
+        <div class="pattern-item">
+          <span class="pattern-name">Email Addresses</span>
+          <span class="pattern-severity medium">Medium</span>
+        </div>
+        <div class="pattern-item">
+          <span class="pattern-name">Phone Numbers</span>
+          <span class="pattern-severity medium">Medium</span>
+        </div>
+        <div class="pattern-item">
+          <span class="pattern-name">Bank Account Numbers</span>
+          <span class="pattern-severity high">High</span>
+        </div>
+        <div class="pattern-item">
+          <span class="pattern-name">Passport Numbers</span>
+          <span class="pattern-severity high">High</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Custom Patterns</h2>
+      <div class="custom-patterns" id="customPatterns">
+        <!-- Custom patterns will be loaded here -->
+      </div>
+      
+      <button class="btn btn-primary" id="addPatternBtn">
+        <span class="btn-icon">+</span>
+        Add Custom Pattern
+      </button>
+    </div>
+
+    <div class="section">
+      <h2>Settings</h2>
+      <div class="settings">
+        <label class="setting-item">
+          <input type="checkbox" id="scanIframes" checked>
+          <span class="checkbox-custom"></span>
+          Scan content in iframes
+        </label>
+        
+        <label class="setting-item">
+          <input type="checkbox" id="scanShadowDOM" checked>
+          <span class="checkbox-custom"></span>
+          Scan Shadow DOM elements
+        </label>
+        
+        <label class="setting-item">
+          <input type="checkbox" id="showNotifications" checked>
+          <span class="checkbox-custom"></span>
+          Show desktop notifications
+        </label>
+      </div>
+    </div>
+
+    <div class="section">
+      <button class="btn btn-secondary btn-full" id="exportBtn">
+        Export Settings
+      </button>
+      <button class="btn btn-secondary btn-full" id="importBtn">
+        Import Settings
+      </button>
+      <input type="file" id="importFile" accept=".json" style="display: none;">
+    </div>
+
+    <footer class="footer">
+      <div class="footer-text">
+        Protecting your sensitive information on non-HTTPS pages
+      </div>
+    </footer>
+  </div>
+
+  <!-- Add Pattern Modal -->
+  <div class="modal" id="addPatternModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add Custom Pattern</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="patternName">Pattern Name</label>
+          <input type="text" id="patternName" placeholder="e.g., API Keys" class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label for="patternRegex">Regular Expression</label>
+          <input type="text" id="patternRegex" placeholder="e.g., api_key_[a-zA-Z0-9]{32}" class="form-input">
+          <div class="form-help">
+            Use JavaScript regular expression syntax. 
+            <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions" target="_blank">Learn more</a>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="patternSeverity">Severity Level</label>
+          <select id="patternSeverity" class="form-select">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="patternTest">Test Pattern</label>
+          <textarea id="patternTest" placeholder="Test your pattern against sample text..." class="form-textarea"></textarea>
+          <div class="test-result" id="testResult"></div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="savePatternBtn">Save Pattern</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

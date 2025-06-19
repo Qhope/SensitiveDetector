@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Page for Sensitive Information Detector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .warning {
+            color: #d32f2f;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .protocol-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .shadow-host {
+            border: 2px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        iframe {
+            width: 100%;
+            height: 200px;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        .test-section {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .test-status {
+            font-weight: bold;
+            padding: 5px;
+            border-radius: 3px;
+            margin: 5px 0;
+        }
+        .test-pass {
+            background: #4caf50;
+            color: white;
+        }
+        .test-fail {
+            background: #f44336;
+            color: white;
+        }
+        .test-pending {
+            background: #ff9800;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sensitive Information Detector Test Page</h1>
+    
+    <div class="protocol-info">
+        <h3>Protocol Information</h3>
+        <p><strong>Current Protocol:</strong> <span id="protocol"></span></p>
+        <p><strong>Expected Behavior:</strong> 
+            <span id="expected-behavior"></span>
+        </p>
+    </div>
+
+    <!-- <div class="test-section">
+        <h3>Extension Status Tests</h3>
+        <div id="detector-test" class="test-status test-pending">Testing Main Detector...</div>
+        <div id="iframe-test" class="test-status test-pending">Testing Iframe Scanner...</div>
+        <div id="shadow-test" class="test-status test-pending">Testing Shadow DOM Scanner...</div>
+        <div id="utility-test" class="test-status test-pending">Testing Detection Utility...</div>
+    </div> -->
+
+    <h2>Test Forms</h2>
+    
+    <div class="form-group">
+        <label for="credit-card">Credit Card Number:</label>
+        <input type="text" id="credit-card" placeholder="Try: 4111 1111 1111 1111">
+    </div>
+
+    <div class="form-group">
+        <label for="ssn">Social Security Number:</label>
+        <input type="text" id="ssn" placeholder="Try: 123-45-6789">
+    </div>
+
+    <div class="form-group">
+        <label for="email">Email Address:</label>
+        <input type="email" id="email" placeholder="Try: user@example.com">
+    </div>
+
+    <div class="form-group">
+        <label for="phone">Phone Number:</label>
+        <input type="text" id="phone" placeholder="Try: (555) 123-4567">
+    </div>
+
+    <div class="form-group">
+        <label for="bank-account">Bank Account Number:</label>
+        <input type="text" id="bank-account" placeholder="Try: 1234567890123456">
+    </div>
+
+    <div class="form-group">
+        <label for="passport">Passport Number:</label>
+        <input type="text" id="passport" placeholder="Try: AB1234567">
+    </div>
+
+    <div class="form-group">
+        <label for="textarea-test">Text Area Test:</label>
+        <textarea id="textarea-test" rows="4" placeholder="Try entering multiple types of sensitive data here..."></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="contenteditable-test">ContentEditable Test:</label>
+        <div id="contenteditable-test" contenteditable="true" style="border: 1px solid #ddd; padding: 10px; min-height: 100px;">
+            Try typing sensitive information here...
+        </div>
+    </div>
+
+    <h2>Shadow DOM Test</h2>
+    <div class="shadow-host" id="shadow-host">
+        <p>Shadow DOM content will be inserted here</p>
+    </div>
+
+    <h2>Iframe Test</h2>
+    <iframe id="test-iframe" title="Test iframe for sensitive data detection" src="data:text/html,
+        <html>
+        <body style='font-family: Arial; padding: 20px;'>
+            <h3>Iframe Content</h3>
+            <p>Test sensitive data detection in iframe:</p>
+            <input type='text' placeholder='Try: 4111-1111-1111-1111' style='width: 100%; padding: 10px; margin: 10px 0;'>
+            <textarea placeholder='Enter sensitive information here...' style='width: 100%; padding: 10px; height: 60px;'></textarea>
+        </body>
+        </html>
+    "></iframe>
+
+    <h2>Dynamic Content Test</h2>
+    <div id="dynamic-content">
+        <button onclick="addDynamicInput()">Add Dynamic Input</button>
+        <div id="dynamic-inputs"></div>
+    </div>
+
+    <!-- <h2>Detection Utility Test</h2>
+    <div class="test-section">
+        <h3>Test Detection Utility</h3>
+        <p>Enter data in the fields above and check the status here:</p>
+        <div id="test-status" class="test-status test-pending">Pending...</div>
+    </div> -->
+
+    <script>
+        // Update protocol information
+        document.getElementById('protocol').textContent = window.location.protocol;
+        
+        if (window.location.protocol === 'https:') {
+            document.getElementById('expected-behavior').textContent = 'No warnings should appear (secure connection)';
+            document.getElementById('expected-behavior').style.color = 'green';
+        } else {
+            document.getElementById('expected-behavior').textContent = 'Warnings should appear when sensitive data is entered';
+            document.getElementById('expected-behavior').style.color = 'red';
+        }
+
+        // Create Shadow DOM content
+        const shadowHost = document.getElementById('shadow-host');
+        const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
+        shadowRoot.innerHTML = `
+            <style>
+                .shadow-content {
+                    background: #e3f2fd;
+                    padding: 15px;
+                    border-radius: 4px;
+                }
+                input {
+                    width: 100%;
+                    padding: 8px;
+                    margin: 10px 0;
+                    border: 1px solid #2196f3;
+                    border-radius: 4px;
+                }
+            </style>
+            <div class="shadow-content">
+                <h4>Shadow DOM Input</h4>
+                <p>This input is inside Shadow DOM:</p>
+                <input type="text" placeholder="Try: 123-45-6789 (SSN)">
+                <input type="email" placeholder="Try: test@example.com">
+            </div>
+        `;
+
+        // Dynamic content functionality
+        let dynamicInputCount = 0;
+        function addDynamicInput() {
+            dynamicInputCount++;
+            const container = document.getElementById('dynamic-inputs');
+            const div = document.createElement('div');
+            div.style.margin = '10px 0';
+            div.innerHTML = `
+                <label>Dynamic Input ${dynamicInputCount}:</label>
+                <input type="text" placeholder="Try entering sensitive data...">
+            `;
+            container.appendChild(div);
+        }
+
+        // Test if detection utility is working
+        function testExtensionComponents() {
+            // Test main detector
+            setTimeout(() => {
+                const detectorTest = document.getElementById('detector-test');
+                if (window.sensitiveInfoDetector) {
+                    detectorTest.textContent = '✓ Main Detector: Active';
+                    detectorTest.className = 'test-status test-pass';
+                } else {
+                    detectorTest.textContent = '✗ Main Detector: Not Found';
+                    detectorTest.className = 'test-status test-fail';
+                }
+            }, 1000);
+
+            // Test iframe scanner
+            setTimeout(() => {
+                const iframeTest = document.getElementById('iframe-test');
+                if (window.iframeScanner) {
+                    iframeTest.textContent = '✓ Iframe Scanner: Active';
+                    iframeTest.className = 'test-status test-pass';
+                } else {
+                    iframeTest.textContent = '✗ Iframe Scanner: Not Found';
+                    iframeTest.className = 'test-status test-fail';
+                }
+            }, 1500);
+
+            // Test shadow DOM scanner
+            setTimeout(() => {
+                const shadowTest = document.getElementById('shadow-test');
+                if (window.shadowDOMScanner) {
+                    shadowTest.textContent = '✓ Shadow DOM Scanner: Active';
+                    shadowTest.className = 'test-status test-pass';
+                } else {
+                    shadowTest.textContent = '✗ Shadow DOM Scanner: Not Found';
+                    shadowTest.className = 'test-status test-fail';
+                }
+            }, 2000);
+
+            // Test detection utility class
+            setTimeout(() => {
+                const utilityTest = document.getElementById('utility-test');
+                if (window.SensitiveInfoDetectionUtil) {
+                    try {
+                        const testUtil = new window.SensitiveInfoDetectionUtil();
+                        const testResult = testUtil.detectSensitiveInfo('test@example.com');
+                        if (testResult && testResult.length > 0) {
+                            utilityTest.textContent = '✓ Detection Utility: Working';
+                            utilityTest.className = 'test-status test-pass';
+                        } else {
+                            utilityTest.textContent = '⚠ Detection Utility: Not Detecting';
+                            utilityTest.className = 'test-status test-fail';
+                        }
+                    } catch (error) {
+                        utilityTest.textContent = `✗ Detection Utility: Error - ${error.message}`;
+                        utilityTest.className = 'test-status test-fail';
+                        console.error('Detection utility test error:', error);
+                    }
+                } else {
+                    utilityTest.textContent = '✗ Detection Utility: Not Found';
+                    utilityTest.className = 'test-status test-fail';
+                }
+            }, 2500);
+        }
+
+        // Run tests when page loads
+        testExtensionComponents();
+
+        // Test data for easy copying
+        console.log('Test data for manual testing:');
+        console.log('Credit Card: 4111 1111 1111 1111');
+        console.log('SSN: 123-45-6789');
+        console.log('Email: user@example.com');
+        console.log('Phone: (555) 123-4567');
+        console.log('Bank Account: 1234567890123456');
+        console.log('Passport: AB1234567');
+    </script>
+</body>
+</html>
