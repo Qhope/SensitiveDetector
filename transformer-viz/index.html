@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transformer Visualizer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<div id="header">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2">
+    <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+    <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+    <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+    <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+  </svg>
+  <div>
+    <h1>Transformer Visualizer</h1>
+    <div class="subtitle">"Attention Is All You Need" — encoder–decoder, step by step</div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- ── Sidebar ────────────────────────────────────────────────────────── -->
+  <div id="sidebar">
+
+    <div id="input-section">
+      <label for="sentence-input">Input sentence (simple English words)</label>
+      <textarea id="sentence-input" placeholder="the cat sat on the mat">the cat sat on the mat</textarea>
+      <button id="run-btn">&#9654;&#xFE0E; Run Forward Pass</button>
+      <div id="unk-warning"></div>
+    </div>
+
+    <div id="token-display"></div>
+
+    <div id="step-controls">
+      <button class="nav-btn" id="prev-btn" disabled title="Previous step">&#8592;</button>
+      <div id="step-counter">Click Run to start</div>
+      <button class="nav-btn" id="next-btn" disabled title="Next step">&#8594;</button>
+    </div>
+
+    <div id="head-selector">
+      <span>Attn head:</span>
+      <button class="head-btn active" data-head="0">H0</button>
+      <button class="head-btn"        data-head="1">H1</button>
+      <button class="head-btn"        data-head="2">H2</button>
+      <button class="head-btn"        data-head="3">H3</button>
+    </div>
+
+    <div id="explanation-panel">
+      <div id="step-title">Welcome to the Transformer Visualizer</div>
+      <div id="step-description">
+        Type a sentence using common English words, then click
+        <strong>Run Forward Pass</strong> to step through the full
+        encoder–decoder Transformer. Use ← → to navigate between steps,
+        and switch attention heads with the H0–H3 buttons.
+      </div>
+      <pre id="step-formula">d_model = 64   n_heads = 4
+n_layers = 2   d_ff    = 256
+vocab    = 88 words</pre>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ── Canvas Area ─────────────────────────────────────────────────────── -->
+  <div id="canvas-area">
+    <div id="arch-and-heatmap">
+
+      <!-- Architecture SVG + token dot overlay -->
+      <div id="arch-container">
+
+        <svg id="arch-svg" width="560" height="680" viewBox="0 0 560 680"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <!-- Arrow markers -->
+            <marker id="arr" viewBox="0 0 8 8" refX="8" refY="4"
+                    markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#475569"/>
+            </marker>
+            <marker id="arr-cross" viewBox="0 0 8 8" refX="8" refY="4"
+                    markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#7c3aed"/>
+            </marker>
+          </defs>
+
+          <!-- ════════════════════════════════════════════════════════════════
+               ENCODER  (x: 40–240, centre 140)
+               Flow: bottom → top   (y decreases going up)
+               ════════════════════════════════════════════════════════════════ -->
+          <text x="140" y="18" text-anchor="middle" font-size="12"
+                font-weight="700" fill="#3b82f6" font-family="monospace">ENCODER ×2</text>
+
+          <!-- Input token label -->
+          <text x="140" y="672" text-anchor="middle" font-size="10"
+                fill="#64748b" font-family="monospace">encoder input tokens</text>
+          <line x1="140" y1="661" x2="140" y2="648"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- enc-embed-box -->
+          <rect id="enc-embed-box" class="arch-box encoder"
+                x="55" y="618" width="170" height="28" rx="5"/>
+          <text x="140" y="636" text-anchor="middle" font-size="10"
+                fill="#93c5fd" font-family="monospace" pointer-events="none">Embed + Pos Enc</text>
+          <line x1="140" y1="618" x2="140" y2="606"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- ─── Encoder Layer 0 ─────────────────────────────────────── -->
+          <!-- enc-mha-0 -->
+          <rect id="enc-mha-0" class="arch-box encoder"
+                x="55" y="568" width="170" height="28" rx="4"/>
+          <text x="140" y="586" text-anchor="middle" font-size="9"
+                fill="#93c5fd" font-family="monospace" pointer-events="none">Multi-Head Self-Attn</text>
+          <line x1="140" y1="568" x2="140" y2="558"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- enc-addnorm-mha-0 -->
+          <rect id="enc-addnorm-mha-0" class="arch-box encoder"
+                x="55" y="530" width="170" height="22" rx="4"/>
+          <text x="140" y="545" text-anchor="middle" font-size="9"
+                fill="#93c5fd" font-family="monospace" pointer-events="none">Add &amp; Norm</text>
+          <!-- residual skip: embed → addnorm-mha-0 -->
+          <path class="residual" d="M225,634 Q248,634 248,541 Q248,541 225,541"/>
+          <line x1="140" y1="530" x2="140" y2="518"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- enc-ffn-0 -->
+          <rect id="enc-ffn-0" class="arch-box encoder"
+                x="55" y="490" width="170" height="22" rx="4"/>
+          <text x="140" y="505" text-anchor="middle" font-size="9"
+                fill="#93c5fd" font-family="monospace" pointer-events="none">Feed-Forward (d_ff=256)</text>
+          <line x1="140" y1="490" x2="140" y2="478"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- enc-addnorm-ffn-0 -->
+          <rect id="enc-addnorm-ffn-0" class="arch-box encoder"
+                x="55" y="450" width="170" height="22" rx="4"/>
+          <text x="140" y="465" text-anchor="middle" font-size="9"
+                fill="#93c5fd" font-family="monospace" pointer-events="none">Add &amp; Norm</text>
+          <!-- residual skip: addnorm-mha-0 → addnorm-ffn-0 -->
+          <path class="residual" d="M225,541 Q240,541 240,461 Q240,461 225,461"/>
+          <line x1="140" y1="450" x2="140" y2="438"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- ─── Encoder Layer 1 ─────────────────────────────────────── -->
+          <!-- enc-mha-1 -->
+          <rect id="enc-mha-1" class="arch-box encoder"
+                x="55" y="400" width="170" height="28" rx="4"/>
+          <text x="140" y="418" text-anchor="middle" font-size="9"
+                fill="#93c5fd" font-family="monospace" pointer-events="none">Multi-Head Self-Attn</text>
+          <line x1="140" y1="400" x2="140" y2="390"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- enc-addnorm-mha-1 -->
+          <rect id="enc-addnorm-mha-1" class="arch-box encoder"
+                x="55" y="362" width="170" height="22" rx="4"/>
+          <text x="140" y="377" text-anchor="middle" font-size="9"
+                fill="#93c5fd" font-family="monospace" pointer-events="none">Add &amp; Norm</text>
+          <!-- residual: layer-0-top → addnorm-mha-1 -->
+          <path class="residual" d="M225,461 Q252,461 252,373 Q252,373 225,373"/>
+          <line x1="140" y1="362" x2="140" y2="350"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- enc-ffn-1 -->
+          <rect id="enc-ffn-1" class="arch-box encoder"
+                x="55" y="322" width="170" height="22" rx="4"/>
+          <text x="140" y="337" text-anchor="middle" font-size="9"
+                fill="#93c5fd" font-family="monospace" pointer-events="none">Feed-Forward (d_ff=256)</text>
+          <line x1="140" y1="322" x2="140" y2="310"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- enc-addnorm-ffn-1 -->
+          <rect id="enc-addnorm-ffn-1" class="arch-box encoder"
+                x="55" y="282" width="170" height="22" rx="4"/>
+          <text x="140" y="297" text-anchor="middle" font-size="9"
+                fill="#93c5fd" font-family="monospace" pointer-events="none">Add &amp; Norm</text>
+          <path class="residual" d="M225,373 Q240,373 240,293 Q240,293 225,293"/>
+          <!-- Encoder output arrow + label -->
+          <line x1="140" y1="282" x2="140" y2="260"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="140" y="252" text-anchor="middle" font-size="9"
+                fill="#64748b" font-family="monospace">encoder output (memory)</text>
+
+          <!-- ════════════════════════════════════════════════════════════════
+               DECODER  (x: 340–540, centre 440)
+               ════════════════════════════════════════════════════════════════ -->
+          <text x="440" y="18" text-anchor="middle" font-size="12"
+                font-weight="700" fill="#8b5cf6" font-family="monospace">DECODER ×2</text>
+
+          <!-- Output label -->
+          <text x="440" y="672" text-anchor="middle" font-size="10"
+                fill="#64748b" font-family="monospace">decoder input (&lt;sos&gt; + tokens)</text>
+          <line x1="440" y1="661" x2="440" y2="648"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- dec-embed-box -->
+          <rect id="dec-embed-box" class="arch-box decoder"
+                x="355" y="618" width="170" height="28" rx="5"/>
+          <text x="440" y="636" text-anchor="middle" font-size="10"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Embed + Pos Enc</text>
+          <line x1="440" y1="618" x2="440" y2="606"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- ─── Decoder Layer 0 ─────────────────────────────────────── -->
+          <!-- dec-masked-mha-0 -->
+          <rect id="dec-masked-mha-0" class="arch-box decoder"
+                x="355" y="568" width="170" height="28" rx="4"/>
+          <text x="440" y="586" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Masked Self-Attn</text>
+          <line x1="440" y1="568" x2="440" y2="558"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- dec-addnorm-mmha-0 -->
+          <rect id="dec-addnorm-mmha-0" class="arch-box decoder"
+                x="355" y="530" width="170" height="22" rx="4"/>
+          <text x="440" y="545" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Add &amp; Norm</text>
+          <path class="residual" d="M525,634 Q548,634 548,541 Q548,541 525,541"/>
+          <line x1="440" y1="530" x2="440" y2="518"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- dec-cross-mha-0 -->
+          <rect id="dec-cross-mha-0" class="arch-box decoder"
+                x="355" y="490" width="170" height="28" rx="4"/>
+          <text x="440" y="504" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Multi-Head Cross-Attn</text>
+          <text x="440" y="515" text-anchor="middle" font-size="8"
+                fill="#a78bfa" font-family="monospace" pointer-events="none">(Q←dec, K/V←enc)</text>
+          <line x1="440" y1="490" x2="440" y2="480"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- dec-addnorm-cmha-0 -->
+          <rect id="dec-addnorm-cmha-0" class="arch-box decoder"
+                x="355" y="452" width="170" height="22" rx="4"/>
+          <text x="440" y="467" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Add &amp; Norm</text>
+          <path class="residual" d="M525,541 Q550,541 550,463 Q550,463 525,463"/>
+          <line x1="440" y1="452" x2="440" y2="440"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- dec-ffn-0 (implied — same layer, no separate highlight needed for step 8 walk) -->
+          <rect id="dec-ffn-0" class="arch-box decoder"
+                x="355" y="412" width="170" height="22" rx="4"/>
+          <text x="440" y="427" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Feed-Forward (d_ff=256)</text>
+          <line x1="440" y1="412" x2="440" y2="400"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- dec-addnorm-ffn-0 -->
+          <rect id="dec-addnorm-ffn-0" class="arch-box decoder"
+                x="355" y="372" width="170" height="22" rx="4"/>
+          <text x="440" y="387" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Add &amp; Norm</text>
+          <path class="residual" d="M525,463 Q542,463 542,383 Q542,383 525,383"/>
+          <line x1="440" y1="372" x2="440" y2="360"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- ─── Decoder Layer 1 ─────────────────────────────────────── -->
+          <!-- dec-masked-mha-1 -->
+          <rect id="dec-masked-mha-1" class="arch-box decoder"
+                x="355" y="322" width="170" height="28" rx="4"/>
+          <text x="440" y="340" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Masked Self-Attn</text>
+          <line x1="440" y1="322" x2="440" y2="312"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- dec-addnorm-mmha-1 -->
+          <rect id="dec-addnorm-mmha-1" class="arch-box decoder"
+                x="355" y="284" width="170" height="22" rx="4"/>
+          <text x="440" y="299" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Add &amp; Norm</text>
+          <path class="residual" d="M525,383 Q552,383 552,295 Q552,295 525,295"/>
+          <line x1="440" y1="284" x2="440" y2="272"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- dec-cross-mha-1 -->
+          <rect id="dec-cross-mha-1" class="arch-box decoder"
+                x="355" y="244" width="170" height="28" rx="4"/>
+          <text x="440" y="258" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Multi-Head Cross-Attn</text>
+          <text x="440" y="269" text-anchor="middle" font-size="8"
+                fill="#a78bfa" font-family="monospace" pointer-events="none">(Q←dec, K/V←enc)</text>
+          <line x1="440" y1="244" x2="440" y2="234"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- dec-addnorm-cmha-1 -->
+          <rect id="dec-addnorm-cmha-1" class="arch-box decoder"
+                x="355" y="206" width="170" height="22" rx="4"/>
+          <text x="440" y="221" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Add &amp; Norm</text>
+          <path class="residual" d="M525,295 Q554,295 554,217 Q554,217 525,217"/>
+          <line x1="440" y1="206" x2="440" y2="194"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- dec-ffn-1 -->
+          <rect id="dec-ffn-1" class="arch-box decoder"
+                x="355" y="166" width="170" height="22" rx="4"/>
+          <text x="440" y="181" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Feed-Forward (d_ff=256)</text>
+          <line x1="440" y1="166" x2="440" y2="154"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- dec-addnorm-ffn-1 -->
+          <rect id="dec-addnorm-ffn-1" class="arch-box decoder"
+                x="355" y="126" width="170" height="22" rx="4"/>
+          <text x="440" y="141" text-anchor="middle" font-size="9"
+                fill="#c4b5fd" font-family="monospace" pointer-events="none">Add &amp; Norm</text>
+          <path class="residual" d="M525,217 Q542,217 542,137 Q542,137 525,137"/>
+          <line x1="440" y1="126" x2="440" y2="114"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- ─── Output ───────────────────────────────────────────────── -->
+          <!-- linear-softmax-box -->
+          <rect id="linear-softmax-box" class="arch-box output-box"
+                x="355" y="72" width="170" height="36" rx="5"/>
+          <text x="440" y="88" text-anchor="middle" font-size="10"
+                fill="#f0abfc" font-family="monospace" pointer-events="none">Linear + Softmax</text>
+          <text x="440" y="101" text-anchor="middle" font-size="8"
+                fill="#a78bfa" font-family="monospace" pointer-events="none">[seq × 88 vocab]</text>
+          <line x1="440" y1="72" x2="440" y2="54"
+                stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="440" y="46" text-anchor="middle" font-size="10"
+                fill="#64748b" font-family="monospace">output probabilities</text>
+
+          <!-- ════════════════════════════════════════════════════════════════
+               CROSS-ATTENTION ARROWS  (encoder memory → decoder)
+               Both cross-attn layers receive the same encoder output.
+               ════════════════════════════════════════════════════════════════ -->
+          <!-- Arrow to dec-cross-mha-0 (y centre ≈ 504) -->
+          <path id="cross-arrow-0" class="cross-arrow"
+                d="M225,268 Q290,268 290,504 Q290,504 355,504"
+                marker-end="url(#arr-cross)"/>
+
+          <!-- Arrow to dec-cross-mha-1 (y centre ≈ 258) -->
+          <path id="cross-arrow-1" class="cross-arrow"
+                d="M225,268 Q310,268 310,258 Q310,258 355,258"
+                marker-end="url(#arr-cross)"/>
+
+          <!-- Cross-arrow legend -->
+          <line x1="50" y1="36" x2="80" y2="36" stroke="#7c3aed"
+                stroke-width="1.5" stroke-dasharray="5 3"/>
+          <text x="84" y="40" font-size="9" fill="#64748b"
+                font-family="monospace">encoder→decoder (K, V)</text>
+
+        </svg><!-- /arch-svg -->
+
+        <!-- Token dot overlay — same viewport as arch-svg -->
+        <svg id="token-overlay" width="560" height="680"
+             viewBox="0 0 560 680" xmlns="http://www.w3.org/2000/svg"></svg>
+
+      </div><!-- /arch-container -->
+
+      <!-- Heatmap Panel -->
+      <div id="heatmap-area">
+        <div id="attn-container"></div>
+        <div id="qkv-area">
+          <div id="q-container"></div>
+          <div id="k-container"></div>
+          <div id="v-container"></div>
+        </div>
+      </div>
+
+    </div><!-- /arch-and-heatmap -->
+  </div><!-- /canvas-area -->
+
+</div><!-- /app -->
+
+<!-- Load order: D3 → math → viz -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="transformer.js"></script>
+<script src="viz.js"></script>
+</body>
+</html>
