@@ -176,6 +176,20 @@ class VizController {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this._onRun();
     });
     this.headBtns.forEach((btn, h) => btn.addEventListener('click', () => this._onHeadSelect(h)));
+
+    // ── Touch swipe on explanation panel to navigate steps (mobile) ────────────
+    // Use the sidebar (not the arch-container, which has its own horizontal scroll)
+    const swipeZone = document.getElementById('explanation-panel');
+    let _touchX = 0;
+    swipeZone.addEventListener('touchstart', e => {
+      _touchX = e.touches[0].clientX;
+    }, { passive: true });
+    swipeZone.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - _touchX;
+      if (Math.abs(dx) > 40) {
+        dx < 0 ? this._onNext() : this._onPrev();
+      }
+    }, { passive: true });
   }
 
   _computeBoxCenters() {
