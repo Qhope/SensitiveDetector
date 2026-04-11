@@ -335,8 +335,100 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--surface2); }
 
-/* ── Responsive ──────────────────────────────────────────────────────────────── */
-@media (max-width: 860px) {
-  #app { flex-direction: column; }
-  #sidebar { width: 100%; max-height: 260px; border-right: none; border-bottom: 1px solid var(--border); }
+/* Remove tap flash on mobile */
+button { -webkit-tap-highlight-color: transparent; }
+
+/* ── Mobile  (≤ 640px — covers iPhone 15 Pro at 393 CSS px) ─────────────────── */
+@media (max-width: 640px) {
+
+  /* 1. Let the page scroll naturally; kill the fixed-height app shell */
+  body {
+    height: auto;
+    min-height: 100dvh;         /* dvh = visible viewport, excludes Safari chrome */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #app {
+    flex-direction: column;
+    overflow: visible;
+    height: auto;
+  }
+
+  /* 2. Sidebar: full width, natural height, scrolls with the page */
+  #sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    overflow-y: visible;
+    flex-shrink: 0;
+  }
+
+  /* 3. Textarea: 16px prevents iOS auto-zoom on focus */
+  #sentence-input { font-size: 16px; height: 64px; }
+
+  /* 4. Touch targets ≥ 44 px (Apple HIG) */
+  #run-btn        { padding: 13px; font-size: 15px; }
+  .nav-btn        { width: 44px; height: 44px; font-size: 20px; }
+  #step-controls  { grid-template-columns: 44px 1fr 44px; }
+  .head-btn       { padding: 8px 14px; font-size: 13px; min-height: 36px; }
+  #head-selector  { gap: 8px; padding: 10px 14px; }
+
+  /* 5. Bigger readable text */
+  #step-title       { font-size: 14px; }
+  #step-description { font-size: 13px; }
+  #step-formula     { font-size: 12px; }
+
+  /* 6. Canvas area: stack arch + heatmap vertically, no overflow:hidden */
+  #canvas-area       { flex: none; overflow: visible; }
+  #arch-and-heatmap  { flex-direction: column; overflow: visible; }
+
+  /* 7. Arch container: horizontal scroll for the 560 px SVG */
+  #arch-container {
+    overflow-x: auto;
+    overflow-y: visible;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: none;
+  }
+
+  /* 8. Heatmap: full width below the SVG */
+  #heatmap-area {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    min-width: unset;
+    width: 100%;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  /* 9. QKV panels wrap on narrow screens */
+  #qkv-area { flex-wrap: wrap; }
+  #qkv-area > div { min-width: 120px; }
+
+  /* 10. Header: compact, hide long subtitle */
+  #header { padding: 10px 14px; }
+  #header h1 { font-size: 15px; }
+  .subtitle  { display: none; }
+
+  /* 11. Safe-area padding for Dynamic Island / home bar */
+  #header {
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
+
+  /* 12. Swipe hint */
+  #swipe-hint {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0 2px;
+    font-size: 11px;
+    color: var(--muted);
+    opacity: .6;
+  }
 }
+
+/* Desktop: keep swipe hint hidden */
+#swipe-hint { display: none; }
