@@ -284,23 +284,21 @@ class ExtensionMonitor {
     }
   }
 
-  async performHealthCheck() {
-    try {
-      // Check if extension is still enabled
-      const info = await chrome.management.getSelf();
-      
-      if (!info.enabled) {
-        this.isEnabled = false;
-        this.warnAboutDisable();
-      }
-      
-      // Update heartbeat
-      this.lastHeartbeat = Date.now();
-      
-    } catch (error) {
-      console.error('Health check failed:', error);
+async performHealthCheck() {
+  try {
+    const info = await chrome.management.getSelf();
+
+    if (info.enabled === false && this.isEnabled === true) {
+      this.isEnabled = false;
+      this.warnAboutDisable();  // Gửi cảnh báo
     }
+
+    // Update heartbeat
+    this.lastHeartbeat = Date.now();
+  } catch (error) {
+    console.error('Health check failed:', error);
   }
+}
 }
 
 // Message handling for popup and content scripts
@@ -348,17 +346,31 @@ async function handleSaveCustomPatterns(patterns, sendResponse) {
   }
 }
 
-async function handleGetSecurityStatus(tab, sendResponse) {
-  const isHttps = tab?.url?.startsWith('https://') || false;
-  const isLocalhost = tab?.url?.includes('localhost') || tab?.url?.includes('127.0.0.1') || false;
-  
-  sendResponse({
-    success: true,
-    isSecure: isHttps || isLocalhost,
-    isHttps: isHttps,
-    url: tab?.url || ''
-  });
+async function handleGetSecurityStatus(sendResponse) {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    const tab = tabs[0];
+
+    const url = tab?.url || '';
+    const isHttps = url.startsWith('https://');
+    const isLocalhost = url.includes('localhost') || url.includes('127.0.0.1') || url.startsWith('chrome://') || url.startsWith('file://');
+console.log('[getSecurityStatus] Active tab URL:', url);
+
+    sendResponse({
+      success: true,
+      isSecure: isHttps || isLocalhost,
+      isHttps,
+      url
+    });
+  } catch (error) {
+    console.error('[getSecurityStatus] Error:', error);
+    sendResponse({
+      success: false,
+      error: error.message
+    });
+  }
 }
+
 
 function handleSensitiveDataReport(message, sender) {
   // Log sensitive data detection for analytics/monitoring

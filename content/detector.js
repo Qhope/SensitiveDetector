@@ -21,7 +21,7 @@ class SensitiveInfoDetectionUtil {
         severity: 'medium'
       },
       phone: {
-        pattern: /\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
+        pattern: /\b(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{2,4}\)?[-.\s]?){2,3}\d{3,4}\b/g,
         name: 'Phone Number',
         severity: 'medium'
       },
